@@ -1,10 +1,14 @@
 package ru.netology;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Main {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         String[] texts = new String[25];
         for (int i = 0; i < texts.length; i++) {
             texts[i] = generateText("aab", 30_000);
@@ -12,10 +16,13 @@ public class Main {
 
         long startTs = System.currentTimeMillis(); // start time
 
-        List<Thread> threads = new ArrayList<>();
+        ExecutorService threadPool = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors() // Оптимизируем под количество ядер
+        );
+        List<Future<Integer>> futures = new ArrayList<>();
 
         for (String text : texts) {
-            Thread thread = new Thread(() -> {
+            Future<Integer> future = threadPool.submit(() -> {
                 int maxSize = 0;
                 for (int i = 0; i < text.length(); i++) {
                     for (int j = 0; j < text.length(); j++) {
@@ -35,17 +42,19 @@ public class Main {
                     }
                 }
                 System.out.println(text.substring(0, 100) + " -> " + maxSize);
+                return maxSize;
             });
-            threads.add(thread);
-            thread.start();
+            futures.add(future);
         }
 
-        for (Thread thread : threads) {
-            thread.join(); // зависаем, ждём когда поток объект которого лежит в thread завершится
+        int maxValue = 0;
+        for (Future<Integer> future : futures) {
+            int result = future.get();
+            maxValue = Integer.max(maxValue, result);
         }
 
         long endTs = System.currentTimeMillis(); // end time
-
+        System.out.println("Maximum length of a character sequence \"a\": " + maxValue);
         System.out.println("Time: " + (endTs - startTs) + "ms");
     }
 
