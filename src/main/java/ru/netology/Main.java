@@ -53,6 +53,8 @@ public class Main {
             maxValue = Integer.max(maxValue, result);
         }
 
+        threadPool.shutdown();
+
         long endTs = System.currentTimeMillis(); // end time
         System.out.println("Maximum length of a character sequence \"a\": " + maxValue);
         System.out.println("Time: " + (endTs - startTs) + "ms");
